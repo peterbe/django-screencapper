@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+  <title>Receiver Sample App</title>
+</head>
+<body>
+  <h1>Receiver Sample App</h1>
+  <h2>This is where things are posted to</h2>
+
+  <hr>
+  <h3>Previous files uploaded</h3>
+  {% for picture in pictures %}
+  <p>
+    <img src="{{ picture.file.url }}"><br>
+    <b>{{ picture.url }}</b>
+    <i>{{ picture.uploaded }}</i>
+  </p>
+  {% endfor %}
+</body>
+</html>
