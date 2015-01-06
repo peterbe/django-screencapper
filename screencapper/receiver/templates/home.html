@@ -16,5 +16,27 @@
     <i>{{ picture.uploaded }}</i>
   </p>
   {% endfor %}
+
+  <hr>
+  <h3>Start a new transform</h3>
+  <form action="/v1/transform" method="post">
+    <b>URL:</b>
+    <input type="url" style="width:500px" name="url" placeholder="https://example.com/file.mp4">
+    <br>
+    <b>Number of shots to make:</b>
+    <input type="number" style="width:50px" name="number" value="11">
+    <br>
+    <b>Callback URL:</b>
+    <input type="url" style="width:500px" name="callback_url"
+     value="{{ current_url }}">
+    <br>
+    <b>Post Files:</b>
+    <input type="checkbox"  name="post_files"> (multipart/form)
+    <br>
+    <b>Post Files individually:</b>
+    <input type="checkbox"  name="post_files_individually"> (one POST per file, only application if "Post Files" is on)
+    <br>
+    <button type="submit">Go!</button>
+  </form>
 </body>
 </html>
