@@ -16,7 +16,7 @@ from pprint import pprint
 from django import http
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from django.template.defaultfilters import filesizeformat
+from django.template.defaultfilters import filesizeformat as _filesizeformat
 from django.contrib.sites.shortcuts import get_current_site
 
 import requests
@@ -27,6 +27,10 @@ from .downloader import download
 from alligator import Gator
 
 gator = Gator(settings.ALLIGATOR_CONN)
+
+
+def filesizeformat(bytes):
+    return _filesizeformat(bytes).replace(u'\xa0', ' ')
 
 
 @contextlib.contextmanager
@@ -313,6 +317,7 @@ def make_multiple_files(name, files):
 @csrf_exempt
 @json_view
 def transform(request):
+    print request.POST.items()
     url = request.POST['url']
     callback_url = request.POST['callback_url']
     number = int(request.POST.get('number', 15))
@@ -344,12 +349,3 @@ def transform(request):
     )
 
     return http.HttpResponse('OK\n', status=201)
-    # context = {
-    #     'urls': [],
-    #     'time': {
-    #         'download': download_time,
-    #         'transform': transform_time,
-    #         'total': download_time + transform_time,
-    #     },
-    # }
-    # return context

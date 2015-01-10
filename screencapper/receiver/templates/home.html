@@ -1,23 +1,18 @@
 <!doctype html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>Receiver Sample App</title>
+  <link rel="icon" type="image/png" href="{{ static('favicon.png') }}">
+  <link rel="stylesheet" href="{{ static('css/normalize.css') }}">
+  <link rel="stylesheet" href="{{ static('css/skeleton.css') }}">
 </head>
 <body>
+  <div class="container">
+
   <h1>Receiver Sample App</h1>
   <h2>This is where things are posted to</h2>
 
-  <hr>
-  <h3>Previous files uploaded</h3>
-  {% for picture in pictures %}
-  <p>
-    <img src="{{ picture.file.url }}"><br>
-    <b>{{ picture.url }}</b>
-    <i>{{ picture.uploaded }}</i>
-  </p>
-  {% endfor %}
-
-  <hr>
   <h3>Start a new transform</h3>
   <form action="/v1/transform" method="post">
     <b>URL:</b>
@@ -28,15 +23,37 @@
     <br>
     <b>Callback URL:</b>
     <input type="url" style="width:500px" name="callback_url"
-     value="{{ current_url }}">
+    value="{{ current_url }}">
     <br>
     <b>Post Files:</b>
-    <input type="checkbox"  name="post_files"> (multipart/form)
+    <input type="checkbox"  name="post_files"> (by multipart/form, if not the URLs to the images are sent)
     <br>
     <b>Post Files individually:</b>
     <input type="checkbox"  name="post_files_individually"> (one POST per file, only application if "Post Files" is on)
     <br>
-    <button type="submit">Go!</button>
+    <button type="submit" class="button-primary">Go!</button>
+    <button type="button" class="curl">Show <code>curl</code> command</button>
   </form>
+
+  <div id="curl" style="display:none">
+    <p>Paste this in to profit</p>
+    <!-- <code></code> -->
+    <pre></pre>
+  </div>
+
+  <hr>
+  <h3>Previous files uploaded</h3>
+  {% for picture in pictures %}
+  <p>
+    <b>From:</b> <code>{{ picture.url }}</code><br>
+    <b>Uploaded:</b> <i>{{ picture.uploaded }}</i>
+    <img src="{{ picture.file.url }}" style="width:90%"><br>
+
+  </p>
+  {% endfor %}
+
+  </div>
+  <script src="{{ static('jquery-2.1.3.min.js') }}"></script>
+  <script src="{{ static('receiver/home.js') }}"></script>
 </body>
 </html>
