@@ -31,13 +31,15 @@
     <b>Post Files individually:</b>
     <input type="checkbox"  name="post_files_individually"> (one POST per file, only application if "Post Files" is on)
     <br>
+    <b>Download file first:</b>
+    <input type="checkbox"  name="download"> (if not, the URL will be hit repeatedly for every picture to take)
+    <br>
     <button type="submit" class="button-primary">Go!</button>
     <button type="button" class="curl">Show <code>curl</code> command</button>
   </form>
 
   <div id="curl" style="display:none">
-    <p>Paste this in to profit</p>
-    <!-- <code></code> -->
+    <p>Paste this in on the command line</p>
     <pre></pre>
   </div>
 

@@ -21,10 +21,11 @@ from django.contrib.sites.shortcuts import get_current_site
 
 import requests
 from jsonview.decorators import json_view
+from alligator import Gator
 
 from .downloader import download
+from .forms import TransformForm
 
-from alligator import Gator
 
 gator = Gator(settings.ALLIGATOR_CONN)
 
@@ -109,7 +110,7 @@ def extract_pictures(filepath, duration, number, output):
             '1',
             output_each,
         ]
-        print ' '.join(command)
+        # print ' '.join(command)
         out, err = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -139,60 +140,48 @@ def valid_url(url):
 
 
 def download_and_save(url, callback_url, options):
-    if options['download']:
-        head = requests.head(url, allow_redirects=True)
-        content_type = head.headers['Content-Type']
+    head = requests.head(url, allow_redirects=True)
+    content_type = head.headers['Content-Type']
 
-        with make_temp_dir(url) as temp_dir:
-            filename = hashlib.md5(url).hexdigest()[:12]
-            if content_type == 'video/mp4':
-                filename += '.mp4'
-            elif content_type == 'video/webm':
-                filename += '.webm'
-            else:
-                call_back_error(
-                    callback_url,
-                    error="Unrecognized content type %r" % content_type
-                )
-            destination = os.path.join(temp_dir, filename)
-            print "About to download"
-            print "\t", url
-            print "To"
-            print "\t", destination
-            print
-            t0 = time.time()
-            response = download(url, destination)
-            t1 = time.time()
-            print "Took", t1 - t0, "seconds to download",
-            size = os.stat(destination)[stat.ST_SIZE]
-            print filesizeformat(size)
-            stats = {
-                'time': {
-                    'download': round(t1 - t0, 4)
-                },
-                'size': size,
-                'size_human': filesizeformat(size),
-            }
-            if response['code'] == 200:
-                extract_and_call_back(
-                    destination,
-                    callback_url,
-                    options,
-                    stats
-                )
-            else:
-                raise NotImplementedError(response)
-    else:
-        # don't bother downloading, just do it on the remote file
+    with make_temp_dir(url) as temp_dir:
+        filename = hashlib.md5(url).hexdigest()[:12]
+        if content_type == 'video/mp4':
+            filename += '.mp4'
+        elif content_type == 'video/webm':
+            filename += '.webm'
+        else:
+            call_back_error(
+                callback_url,
+                error="Unrecognized content type %r" % content_type
+            )
+        destination = os.path.join(temp_dir, filename)
+        print "About to download"
+        print "\t", url
+        print "To"
+        print "\t", destination
+        print
+        t0 = time.time()
+        response = download(url, destination)
+        t1 = time.time()
+        print "Took", t1 - t0, "seconds to download",
+        size = os.stat(destination)[stat.ST_SIZE]
+        print filesizeformat(size)
         stats = {
-            'time': {},
+            'time': {
+                'download': round(t1 - t0, 4)
+            },
+            'size': size,
+            'size_human': filesizeformat(size),
         }
-        extract_and_call_back(
-            url,
-            callback_url,
-            options,
-            stats,
-        )
+        if response['code'] == 200:
+            extract_and_call_back(
+                destination,
+                callback_url,
+                options,
+                stats
+            )
+        else:
+            raise NotImplementedError(response)
 
 
 
@@ -231,7 +220,6 @@ def callback(url, files, options, stats):
     print options
     print "FILES"
     print files
-    # print "MEDIA_ROOT", settings.MEDIA_ROOT
     stats['time']['total'] = round(
         sum(stats['time'].values())
     )
@@ -317,17 +305,24 @@ def make_multiple_files(name, files):
 @csrf_exempt
 @json_view
 def transform(request):
-    print request.POST.items()
-    url = request.POST['url']
-    callback_url = request.POST['callback_url']
-    number = int(request.POST.get('number', 15))
-    post_files = request.POST.get('post_files', False)
-    post_file_name = request.POST.get('post_file_name', 'file').strip()
-    post_files_individually = request.POST.get('post_files_individually', False)
+    form = TransformForm(request.POST)
+    if not form.is_valid():
+        return http.HttpResponseBadRequest(
+            json.dumps(dict(form.errors)),
+            content_type='application/json'
+        )
+
+    url = form.cleaned_data['url']
+    callback_url = form.cleaned_data['callback_url']
+    number = form.cleaned_data['number'] or 15
+    post_files = form.cleaned_data['post_files']
+    post_file_name = form.cleaned_data['post_file_name'].strip() or 'file'
+    post_files_individually = form.cleaned_data['post_files_individually']
+    download = form.cleaned_data['download']
 
     checked_url = check_url(url)
     if not checked_url:
-        raise BadRequest(url)  # XXX
+        raise http.HttpResponseBadRequest(url)
 
     assert number > 0 and number < 100, number
     assert valid_url(callback_url), callback_url
@@ -340,12 +335,24 @@ def transform(request):
         'post_file_name': post_file_name,
         'domain': get_current_site(request).domain,
         'protocol': request.is_secure() and 'https' or 'http',
-        'download': True,  # XXX??,
     }
-    gator.task(
-        download_and_save,
-        checked_url, callback_url,
-        options
-    )
+    if download:
+        gator.task(
+            download_and_save,
+            checked_url, callback_url,
+            options
+        )
+    else:
+        # don't bother downloading, just do it on the remote file
+        stats = {
+            'time': {},
+        }
+        gator.task(
+            extract_and_call_back,
+            url,
+            callback_url,
+            options,
+            stats,
+        )
 
     return http.HttpResponse('OK\n', status=201)
