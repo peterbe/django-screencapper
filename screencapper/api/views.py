@@ -334,19 +334,12 @@ def transform(request):
         )
 
     submission = form.save()
-    # url = form.cleaned_data['url']
     url = submission.url
-    # callback_url = form.cleaned_data['callback_url']
     callback_url = submission.callback_url
-    # number = form.cleaned_data['number'] or 10
     number = submission.number
-    # post_files = form.cleaned_data['post_files']
     post_files = submission.post_files
-    # post_file_name = form.cleaned_data['post_file_name'].strip() or 'file'
-    post_file_name = submission.post_file_name or 'files'
-    # post_files_individually = form.cleaned_data['post_files_individually']
+    post_file_name = submission.post_file_name or 'file'
     post_files_individually = submission.post_files_individually
-    # download = form.cleaned_data['download']
     download = submission.download
 
     checked_url = check_url(url)
