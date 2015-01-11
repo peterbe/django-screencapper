@@ -1,11 +1,13 @@
 from django import forms
 
+from .models import Submission
 
-class TransformForm(forms.Form):
-    url = forms.URLField()
-    callback_url = forms.URLField()
-    number = forms.IntegerField(required=False)
-    post_files = forms.BooleanField(required=False)
-    post_files_individually = forms.BooleanField(required=False)
-    post_file_name = forms.CharField(required=False)
-    download = forms.BooleanField(required=False)
+
+class TransformForm(forms.ModelForm):
+    class Meta:
+        model = Submission
+        exclude = ('submitted', 'stats')
+
+    def __init__(self, *args, **kwargs):
+        super(TransformForm, self).__init__(*args, **kwargs)
+        self.fields['post_file_name'].required = False

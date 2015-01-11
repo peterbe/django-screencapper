@@ -19,6 +19,7 @@ def home(request):
         # print request.POST.items()
         print "STATS"
         pprint(json.loads(request.POST['stats']))
+
         # print repr(request.POST)
         video_url = request.POST['url']
         if request.POST.getlist('urls'):

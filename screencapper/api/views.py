@@ -25,7 +25,7 @@ from alligator import Gator
 
 from .downloader import download
 from .forms import TransformForm
-
+from .models import Submission, CallbackResponse
 
 gator = Gator(settings.ALLIGATOR_CONN)
 
@@ -186,6 +186,7 @@ def download_and_save(url, callback_url, options):
 
 
 def extract_and_call_back(video_url, callback_url, options, stats):
+    submission = Submission.objects.get(id=options['submission'])
     duration = get_duration(video_url)
     destination = os.path.join(
         settings.MEDIA_ROOT,
@@ -212,10 +213,14 @@ def extract_and_call_back(video_url, callback_url, options, stats):
     ))
     print "Took", t1 - t0, "seconds to extract", len(files), "pictures"
     stats['time']['transform'] = round(t1 - t0, 4)
+    submission.stats = stats
+    submission.save()
     callback(callback_url, files, options, stats)
 
 
 def callback(url, files, options, stats):
+    submission = Submission.objects.get(id=options['submission'])
+
     print "OPTIONS"
     print options
     print "FILES"
@@ -250,6 +255,11 @@ def callback(url, files, options, stats):
                 files=make_multiple_files(options['post_file_name'], files),
                 data=data
             )
+            CallbackResponse.objects.create(
+                submission=submission,
+                content=response.content,
+                status_code=response.status_code
+            )
             for f in files:
                 print "Deleting", f
                 os.remove(f)
@@ -271,11 +281,17 @@ def callback(url, files, options, stats):
             url,
             data
         )
+        CallbackResponse.objects.create(
+            submission=submission,
+            content=response.content,
+            status_code=response.status_code
+        )
     print "Response code..."
     print response.status_code
 
 
 def send_individual_file(url, file, data, options):
+    submission = Submission.objects.get(id=options['submission'])
     print "Posting file..."
     pprint(data)
     print "To..."
@@ -284,6 +300,11 @@ def send_individual_file(url, file, data, options):
         url,
         files=make_multiple_files(options['post_file_name'], [file]),
         data=data
+    )
+    CallbackResponse.objects.create(
+        submission=submission,
+        content=response.content,
+        status_code=response.status_code
     )
     print response.status_code
 
@@ -312,13 +333,21 @@ def transform(request):
             content_type='application/json'
         )
 
-    url = form.cleaned_data['url']
-    callback_url = form.cleaned_data['callback_url']
-    number = form.cleaned_data['number'] or 15
-    post_files = form.cleaned_data['post_files']
-    post_file_name = form.cleaned_data['post_file_name'].strip() or 'file'
-    post_files_individually = form.cleaned_data['post_files_individually']
-    download = form.cleaned_data['download']
+    submission = form.save()
+    # url = form.cleaned_data['url']
+    url = submission.url
+    # callback_url = form.cleaned_data['callback_url']
+    callback_url = submission.callback_url
+    # number = form.cleaned_data['number'] or 10
+    number = submission.number
+    # post_files = form.cleaned_data['post_files']
+    post_files = submission.post_files
+    # post_file_name = form.cleaned_data['post_file_name'].strip() or 'file'
+    post_file_name = submission.post_file_name or 'files'
+    # post_files_individually = form.cleaned_data['post_files_individually']
+    post_files_individually = submission.post_files_individually
+    # download = form.cleaned_data['download']
+    download = submission.download
 
     checked_url = check_url(url)
     if not checked_url:
@@ -335,6 +364,7 @@ def transform(request):
         'post_file_name': post_file_name,
         'domain': get_current_site(request).domain,
         'protocol': request.is_secure() and 'https' or 'http',
+        'submission': submission.id,
     }
     if download:
         gator.task(
