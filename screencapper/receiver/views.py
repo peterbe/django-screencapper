@@ -10,6 +10,7 @@ from django.core.files import File
 from django.core.files.temp import NamedTemporaryFile
 
 from screencapper.receiver.models import Picture
+from screencapper.api.models import Submission
 
 
 @csrf_exempt
@@ -65,5 +66,8 @@ def home(request):
     context = {
         'pictures': Picture.objects.all().order_by('-uploaded'),
         'current_url': current_url,
+        'submissions': Submission.objects.all().order_by('-submitted'),
     }
+    for x in context['submissions']:
+        print repr(x.stats)
     return render(request, 'home.html', context)

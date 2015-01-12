@@ -44,12 +44,37 @@
   </div>
 
   <hr>
+  <h3>Previous Submissions</h3>
+  {% for submission in submissions %}
+  <p>
+    <b>URL:</b> <code>{{ submission.url }}</code><br>
+    <b>Submitted:</b> {{ submission.submitted }}<br>
+    <b>Options:</b>
+    <code>{{ submission.number }} pictures</code>
+    {% if submission.download %}<code>download</code>
+    {% else %}<code>not download</code>
+    {% endif %}
+    {% if submission.post_files %}<code>post_files</code>
+    {% else %}<small>don't post files</small>
+    {% endif %}
+    {% if submission.post_files_individually %}<code>post_files_individually</code>
+    {% else %}<small>don't post files individually</small>
+    {% endif %}
+    {% if submission.post_file_name %}
+    name:<code>{{ submission.post_file_name }}</code>
+    {% endif %}
+    <pre>{{ pretty_print_json(submission.stats, sort_keys=True) }}</pre>
+  </p>
+  {% endfor %}
+
+
+  <hr>
   <h3>Previous files uploaded</h3>
   {% for picture in pictures %}
   <p>
     <b>From:</b> <code>{{ picture.url }}</code><br>
     <b>Uploaded:</b> <i>{{ picture.uploaded }}</i>
-    <img src="{{ picture.file.url }}" style="width:90%"><br>
+    <a href="{{ picture.file.url }}"><img src="{{ picture.file.url }}" style="width:50%"></a><br>
 
   </p>
   {% endfor %}
