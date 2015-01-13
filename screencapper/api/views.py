@@ -184,7 +184,6 @@ def download_and_save(url, callback_url, options):
             raise NotImplementedError(response)
 
 
-
 def extract_and_call_back(video_url, callback_url, options, stats):
     submission = Submission.objects.get(id=options['submission'])
     duration = get_duration(video_url)

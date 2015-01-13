@@ -73,8 +73,8 @@
   {% for picture in pictures %}
   <p>
     <b>From:</b> <code>{{ picture.url }}</code><br>
-    <b>Uploaded:</b> <i>{{ picture.uploaded }}</i>
-    <a href="{{ picture.file.url }}"><img src="{{ picture.file.url }}" style="width:50%"></a><br>
+    <b>Uploaded:</b> <i>{{ picture.uploaded }}</i><br>
+    <a href="{{ picture.file.url }}"><img src="{{ picture.file.url }}" style="width:50%"></a>
 
   </p>
   {% endfor %}
