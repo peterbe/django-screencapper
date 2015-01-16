@@ -26,6 +26,7 @@ from alligator import Gator
 from .downloader import download
 from .forms import TransformForm
 from .models import Submission, CallbackResponse
+from .utils import check_url, valid_url
 
 gator = Gator(settings.ALLIGATOR_CONN)
 
@@ -117,26 +118,6 @@ def extract_pictures(filepath, duration, number, output):
             stderr=subprocess.PIPE,
         ).communicate()
         seconds += incr
-
-
-def check_url(url):
-    url = url.strip()
-    if not valid_url(url):
-        return
-    head = requests.head(url)
-    if head.status_code == 302:
-        url = head.headers['location']
-        return check_url(url)
-    if head.status_code == 200:
-        return url
-
-
-def valid_url(url):
-    parsed = urlparse.urlparse(url)
-    if parsed.netloc and parsed.path:
-        if parsed.scheme in ('http', 'https'):
-            return True
-    return False
 
 
 def download_and_save(url, callback_url, options):
